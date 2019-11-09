@@ -1,0 +1,10 @@
+.title {
+    height: 70px;
+    background: blue;
+    border: 2px solid black;
+    color: white;
+}
+
+.cat {
+    width: 20%;
+}
