@@ -1,5 +1,5 @@
 import React from 'react';
-import QuestionComponent from '../question';
+import QuestionComponent from '../clue';
 import Question from '../../interfaces/question';
 import Category from '../../interfaces/category';
 import './category.css';

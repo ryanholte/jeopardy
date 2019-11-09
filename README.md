@@ -1,7 +1,7 @@
 # Overview
 This project is designed to function like a simple Jeopardy app. The app selectes random questions from 5 popular categories. Once the app is running, click/tap on a clue to read the question. You can toggle the answer by clicking "show answer." After you view a question the link will be hidden to prevent you from being able to read it again. 
 
-#To run app
+# To run app
 
 #### From scratch
 
@@ -10,7 +10,7 @@ This project is designed to function like a simple Jeopardy app. The app selecte
 Changes to the app directory. Installs all dependencies. Then runs the app
 
 
-### After install
+#### After install
 
 `cd app && npm start`
 
