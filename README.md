@@ -1,6 +1,22 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Overview
+This project is designed to function like a simple Jeopardy app. The app selectes random questions from 5 popular categories. Once the app is running, click/tap on a clue to read the question. You can toggle the answer by clicking "show answer." After you view a question the link will be hidden to prevent you from being able to read it again. 
 
-## Available Scripts
+#To run app
+
+#### From scratch
+
+`cd app && npm i && npm start`
+
+Changes to the app directory. Installs all dependencies. Then runs the app
+
+
+### After install
+
+`cd app && npm start`
+
+Changes to the app directory and runs the app.
+
+## Other Available Scripts
 
 In the project directory, you can run:
 
@@ -37,8 +53,3 @@ Instead, it will copy all the configuration files and the transitive dependencie
 
 You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
 
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
