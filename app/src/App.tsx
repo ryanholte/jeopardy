@@ -1,7 +1,7 @@
 import React from 'react';
 import './App.css';
 import Board from './components/board';
-import QuestionView from './components/question-view';
+import QuestionView from './components/rule-view';
 import Question from './interfaces/question';
 import Category from './interfaces/category';
 import Categories from './interfaces/categories';
