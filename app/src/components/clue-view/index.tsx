@@ -1,10 +1,10 @@
 import React from 'react';
-import Question from '../../interfaces/question';
+import Clue from '../../interfaces/clue';
 import './clue.css';
 
 import {Link} from 'react-router-dom';
 
-class QuestionView extends React.Component<Question> {
+class ClueView extends React.Component<Clue> {
   state = {
     showAnswer: false,
   };
@@ -28,7 +28,7 @@ class QuestionView extends React.Component<Question> {
       <button
         className={'btn btn-primary'}
         onClick={() => (this.setState({showAnswer: !this.state.showAnswer}))}>
-        {this.state.showAnswer ? 'Show Question' : 'Show Answer'}
+        {this.state.showAnswer ? 'Show Clue' : 'Show Answer'}
       </button>
     )
   }
@@ -57,7 +57,7 @@ class QuestionView extends React.Component<Question> {
             {this.getButton()}
           </div>
           <div className={'col-12'}>
-            <Link to={'/'} className={'btn btn-outline'}>Close</Link>
+            <Link to={'/'} className={'btn btn-outline'}>Done</Link>
           </div>
         </div>
       </div>
@@ -65,4 +65,4 @@ class QuestionView extends React.Component<Question> {
   }
 }
 
-export default QuestionView;
+export default ClueView;

@@ -1,8 +1,8 @@
-import Question from './question';
+import Clue from './clue';
 
 export default interface Category {
   id: number;
   title: string;
 
-  questions: Question[];
+  clues: Clue[];
 }

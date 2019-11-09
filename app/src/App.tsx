@@ -1,10 +1,11 @@
 import React from 'react';
 import './App.css';
 import Board from './components/board';
-import QuestionView from './components/clue-view';
-import Question from './interfaces/question';
+import ClueView from './components/clue-view';
+import Clue from './interfaces/clue';
 import Category from './interfaces/category';
 import Categories from './interfaces/categories';
+import GameControls from './components/game-controls';
 
 import {
   BrowserRouter as Router,
@@ -19,23 +20,23 @@ import * as Q from 'q';
 const categories: Category[] = [{
   id: 218,
   title: 'Science',
-  questions: [],
+  clues: [],
 }, {
   id: 309,
   title: 'The Movies',
-  questions: [],
+  clues: [],
 }, {
   id: 705,
   title: 'Familiar Phrases',
-  questions: [],
+  clues: [],
 }, {
   id: 267,
   title: 'Nature',
-  questions: [],
+  clues: [],
 }, {
   id: 369,
   title: 'Travel & Tourism',
-  questions: [],
+  clues: [],
 }];
 
 const api = 'http://jservice.io/api';
@@ -46,39 +47,25 @@ const fetchUrl = async (url: string) => {
   return data
 };
 
+interface AppConfig {
+  categories: Category[],
+  clues: Clue[],
+  columnsSelected: number,
+  cluesSelected: number,
+}
 
-class App extends React.Component<{}, Categories> {
+class App extends React.Component<{}, AppConfig> {
+
   constructor(props: any) {
     super(props);
     this.state = {
       categories: [],
+      clues: [],
+      columnsSelected: 5,
+      cluesSelected: 5,
     };
   }
 
-  setQuestionViewed(categoryId: number, questionId: number) {
-    const category = this.state.categories.find((category: Category) => category.id === categoryId);
-
-    if (!category) {
-      return;
-    }
-
-    const otherCategories = this.state.categories.filter((category: Category) => category.id !== categoryId);
-    const question = category.questions.find((question: Question) => question.id === questionId);
-    const otherQuestions = category.questions.filter((question: Question) => question.id !== questionId);
-
-    if (!question || question.hasBeenViewed) {
-      return;
-    }
-
-    question.hasBeenViewed = true;
-
-    otherQuestions.push(question);
-    category.questions = this.questionsSorted(otherQuestions);
-    otherCategories.push(category);
-    this.setState({
-      categories: this.categoriesSorted(otherCategories),
-    });
-  }
 
   async componentDidMount() {
     await this.loadCategories();
@@ -88,8 +75,8 @@ class App extends React.Component<{}, Categories> {
     return categories.sort((category1: Category, category2: Category) => category1.title.localeCompare(category2.title));
   }
 
-  questionsSorted(questions: Question[]): Question[] {
-    return questions.sort((question1: Question, question2: Question) => {
+  cluesSorted(questions: Clue[]): Clue[] {
+    return questions.sort((question1: Clue, question2: Clue) => {
       if (question1.value > question2.value) {
         return 1;
       }
@@ -97,28 +84,76 @@ class App extends React.Component<{}, Categories> {
     })
   }
 
+  resetGame() {
+    this.setState({
+      cluesSelected: 5,
+      columnsSelected: 5,
+      clues: this.state.clues.map((clue: Clue) => {
+        clue.hasBeenViewed = false;
+        return clue;
+      }),
+    });
+  }
+
+  reset() {
+    // const response = (window as any).confirm('Reset the game.');
+
+    // if (!response) {
+    //   return;
+    // }
+
+    this.resetGame();
+  }
+
+  setClues(clues: number) {
+    const parsedClues = Number(clues);
+    this.setState({
+      cluesSelected: parsedClues,
+    });
+  }
+
+  setColumns(columns: number) {
+    const parsedcolumn = Number(columns);
+    this.setState({
+      columnsSelected: parsedcolumn,
+    });
+  }
+
+  get boardCategories(): Category[] {
+    const categories: Category[] = this.state.categories.slice(0, this.state.columnsSelected);
+    return categories.map((category: Category) => {
+      category.clues = this.getCluesForCategory(category.id).slice(0, this.state.cluesSelected);
+      return category;
+    });
+  }
+
+  getCluesForCategory(categoryId: number) {
+    return this.state.clues.filter((clue: Clue) => clue.category && clue.category.id === categoryId);
+  }
+
   async loadCategories() {
     const dailyDoubleCategoryIndex: number = Math.round(Math.random() * categories.length - 1);
-    const dailyDoubleQuestionIndex: number = Math.round(Math.random() * 4);
-    console.log(`Hint: Daily Double can be found at index ${dailyDoubleCategoryIndex}, ${dailyDoubleQuestionIndex}`);
+    const dailyDoubleClueIndex: number = Math.round(Math.random() * 4);
+    console.log(`Hint: Daily Double can be found at index ${dailyDoubleCategoryIndex}, ${dailyDoubleClueIndex}`);
     return Promise.all(this.categoriesSorted(categories).map(async (category: Category, index: number) => {
-      let questions = await this.loadQuestions(category.id);
+      let clues = await this.loadClues(category.id);
       if (index === dailyDoubleCategoryIndex) {
-        questions[dailyDoubleQuestionIndex].isDailyDouble = true;
+        clues[dailyDoubleClueIndex].isDailyDouble = true;
       }
 
-      category.questions = this.questionsSorted(questions);
+      category.clues = this.cluesSorted(clues);
       const categories = this.state.categories;
       categories.push(category);
       this.setState({
-        categories: this.categoriesSorted(categories),
+        clues: this.state.clues.concat(clues),
+        categories: this.categoriesSorted(categories)
       });
     }));
   }
 
-  async loadQuestions(categoryId: number): Promise<Question[]> {
+  async loadClues(categoryId: number): Promise<Clue[]> {
     let data = await fetchUrl(`/clues?category=${categoryId}`);
-    data = data.filter((question: Question) => [100, 200, 300, 400, 500].includes(question.value));
+    data = data.filter((question: Clue) => [100, 200, 300, 400, 500].includes(question.value));
     return data.slice(0, 5);
   }
 
@@ -129,12 +164,26 @@ class App extends React.Component<{}, Categories> {
         <Router>
           <Switch>
             <Route exact path="/">
-              <Board categories={this.state.categories}/>
+              <div className={'d-flex flex-column'}>
+                <Board categories={this.boardCategories}/>
+                <GameControls
+                  reset={this.reset.bind(this)}
+                  setColumns={this.setColumns.bind(this)}
+                  setClues={this.setClues.bind(this)}
+                  columnsSelected={this.state.columnsSelected}
+                  cluesSelected={this.state.cluesSelected}
+                />
+              </div>
             </Route>
-            <Route path="/question"
-                   render={(state: any) => <QuestionView id={state.location.state.question.id} question={state.location.state.question.question} answer={state.location.state.question.answer}
-                                                         value={state.location.state.question.value} hasBeenViewed={state.location.state.question.hasBeenViewed}
-                                                         isDailyDouble={state.location.state.question.isDailyDouble}/>}>
+            <Route path="/clue"
+                   render={(state: any) => <ClueView
+                     id={state.location.state.clue.id}
+                     question={state.location.state.clue.question}
+                     answer={state.location.state.clue.answer}
+                     value={state.location.state.clue.value}
+                     hasBeenViewed={state.location.state.clue.hasBeenViewed}
+                     isDailyDouble={state.location.state.clue.isDailyDouble}/>
+                   }>
             </Route>
           </Switch>
         </Router>

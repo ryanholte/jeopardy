@@ -11,8 +11,8 @@ class Board extends React.Component<Categories> {
       <div>
         <h1>Today on Jeopardy ... </h1>
 
-        <div className={'row d-flex flex-row'}>
-          {this.props.categories.map((category: Category) => <BoardCategory key={category.id} questions={category.questions} category={category}/>)}
+        <div className={'row d-flex justify-content-center flex-row'}>
+          {this.props.categories.map((category: Category) => <BoardCategory key={category.id} clues={category.clues} category={category}/>)}
         </div>
       </div>
     )

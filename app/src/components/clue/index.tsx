@@ -1,27 +1,27 @@
 import React from 'react';
-import './question.css';
+import './clue.css';
 import {
   Link
 } from 'react-router-dom';
-import Question from '../../interfaces/question';
+import Clue from '../../interfaces/clue';
 import Category from '../../interfaces/category';
 
-interface BoardQuestion {
-  question: Question,
+interface BoardClue {
+  clue: Clue,
   category: Category,
 }
 
-class QuestionComponent extends React.Component<BoardQuestion> {
+class ClueComponent extends React.Component<BoardClue> {
   render() {
     return (
-      <div className={`question-wrapper ${this.props.question.hasBeenViewed ? 'viewed' : ''} d-flex align-content-center justify-content-center flex-column`}>
+      <div className={`clue-wrapper ${this.props.clue.hasBeenViewed ? 'viewed' : ''} d-flex align-content-center justify-content-center flex-column`}>
         <Link
-          onClick={() => this.props.question.hasBeenViewed = true}
+          onClick={() => this.props.clue.hasBeenViewed = true}
           to={{
-            pathname: '/question',
-            state: {question: this.props.question}
+            pathname: '/clue',
+            state: {clue: this.props.clue}
           }}>
-          {this.props.question.value}
+          {this.props.clue.value}
         </Link>
       </div>
     )
@@ -29,4 +29,4 @@ class QuestionComponent extends React.Component<BoardQuestion> {
 }
 
 
-export default QuestionComponent;
+export default ClueComponent;
