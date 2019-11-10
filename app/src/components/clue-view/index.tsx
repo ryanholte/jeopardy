@@ -9,9 +9,6 @@ class ClueView extends React.Component<Clue> {
     showAnswer: false,
   };
 
-  componentDidMount() {
-  }
-
   showMainText() {
     if (this.state.showAnswer) {
       return (

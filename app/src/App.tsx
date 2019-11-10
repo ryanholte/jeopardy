@@ -4,8 +4,8 @@ import Board from './components/board';
 import ClueView from './components/clue-view';
 import Clue from './interfaces/clue';
 import Category from './interfaces/category';
-import Categories from './interfaces/categories';
 import GameControls from './components/game-controls';
+import CategoriesData from './data/categories';
 
 import {
   BrowserRouter as Router,
@@ -13,31 +13,6 @@ import {
   Route,
   Link
 } from 'react-router-dom';
-import category from './interfaces/category';
-import * as Q from 'q';
-
-
-const categories: Category[] = [{
-  id: 218,
-  title: 'Science',
-  clues: [],
-}, {
-  id: 309,
-  title: 'The Movies',
-  clues: [],
-}, {
-  id: 705,
-  title: 'Familiar Phrases',
-  clues: [],
-}, {
-  id: 267,
-  title: 'Nature',
-  clues: [],
-}, {
-  id: 369,
-  title: 'Travel & Tourism',
-  clues: [],
-}];
 
 const api = 'http://jservice.io/api';
 
@@ -48,10 +23,13 @@ const fetchUrl = async (url: string) => {
 };
 
 interface AppConfig {
-  categories: Category[],
-  clues: Clue[],
-  columnsSelected: number,
-  cluesSelected: number,
+  categories: Category[];
+  clues: Clue[];
+  columnsSelected: number;
+  cluesSelected: number;
+  gameOver: boolean;
+  isLoading: boolean;
+  resizing: boolean;
 }
 
 class App extends React.Component<{}, AppConfig> {
@@ -63,12 +41,15 @@ class App extends React.Component<{}, AppConfig> {
       clues: [],
       columnsSelected: 5,
       cluesSelected: 5,
+      gameOver: false,
+      isLoading: false,
+      resizing: false,
     };
   }
 
 
-  async componentDidMount() {
-    await this.loadCategories();
+  componentDidMount() {
+    this.setCategories();
   }
 
   categoriesSorted(categories: Category[]): Category[] {
@@ -84,71 +65,94 @@ class App extends React.Component<{}, AppConfig> {
     })
   }
 
-  resetGame() {
-    this.setState({
+  async resetGame() {
+    await this.setState({
       cluesSelected: 5,
       columnsSelected: 5,
-      clues: this.state.clues.map((clue: Clue) => {
-        clue.hasBeenViewed = false;
-        return clue;
-      }),
     });
+    await this.setCategories();
   }
 
   reset() {
-    // const response = (window as any).confirm('Reset the game.');
+    const response = (window as any).confirm('Reset the game.');
 
-    // if (!response) {
-    //   return;
-    // }
+    if (!response) {
+      return;
+    }
 
     this.resetGame();
+  }
+
+  newGame() {
+    CategoriesData.map((category: Category) => category.wasUsed = false);
+    this.setState({
+      gameOver: false,
+    });
+    this.setCategories();
   }
 
   setClues(clues: number) {
     const parsedClues = Number(clues);
     this.setState({
       cluesSelected: parsedClues,
+      resizing: true,
     });
+    this.setCategories();
   }
 
-  setColumns(columns: number) {
+  async setColumns(columns: number) {
     const parsedcolumn = Number(columns);
-    this.setState({
+    console.log(parsedcolumn)
+    await this.setState({
       columnsSelected: parsedcolumn,
+      resizing: true,
+    })
+    await this.setCategories();
+  }
+
+  get availableCategories(): Category[] {
+    return CategoriesData.filter((category: Category) => {
+      if (!category.wasUsed) {
+        return category;
+      }
     });
   }
 
-  get boardCategories(): Category[] {
-    const categories: Category[] = this.state.categories.slice(0, this.state.columnsSelected);
-    return categories.map((category: Category) => {
-      category.clues = this.getCluesForCategory(category.id).slice(0, this.state.cluesSelected);
-      return category;
-    });
-  }
-
-  getCluesForCategory(categoryId: number) {
-    return this.state.clues.filter((clue: Clue) => clue.category && clue.category.id === categoryId);
-  }
-
-  async loadCategories() {
+  async setCategories() {
+    const categories: Category[] = this.availableCategories.slice(0, this.state.columnsSelected);
     const dailyDoubleCategoryIndex: number = Math.round(Math.random() * categories.length - 1);
     const dailyDoubleClueIndex: number = Math.round(Math.random() * 4);
-    console.log(`Hint: Daily Double can be found at index ${dailyDoubleCategoryIndex}, ${dailyDoubleClueIndex}`);
-    return Promise.all(this.categoriesSorted(categories).map(async (category: Category, index: number) => {
-      let clues = await this.loadClues(category.id);
-      if (index === dailyDoubleCategoryIndex) {
-        clues[dailyDoubleClueIndex].isDailyDouble = true;
+
+    this.setState({
+      isLoading: true,
+    });
+
+    if (!categories.length) {
+      this.setState({
+        gameOver: true,
+      });
+    }
+
+    const boardCategories = await Promise.all(categories.map(async (category: Category, index: number) => {
+      const clues = await this.loadClues(category.id);
+      if (!this.state.resizing) {
+        category.wasUsed = true;
       }
 
-      category.clues = this.cluesSorted(clues);
-      const categories = this.state.categories;
-      categories.push(category);
-      this.setState({
-        clues: this.state.clues.concat(clues),
-        categories: this.categoriesSorted(categories)
-      });
+      if (index === dailyDoubleCategoryIndex) {
+        clues[dailyDoubleClueIndex].isDailyDouble = true;
+        console.log(`Hint: Daily double at: ${dailyDoubleCategoryIndex}, ${dailyDoubleClueIndex}`);
+      }
+
+      category.clues = clues.slice(0, this.state.cluesSelected);
+      return category;
     }));
+
+    this.setState({
+      resizing: false,
+      isLoading: false,
+      categories: boardCategories,
+    })
   }
 
   async loadClues(categoryId: number): Promise<Clue[]> {
@@ -165,14 +169,18 @@ class App extends React.Component<{}, AppConfig> {
           <Switch>
             <Route exact path="/">
               <div className={'d-flex flex-column'}>
-                <Board categories={this.boardCategories}/>
-                <GameControls
-                  reset={this.reset.bind(this)}
-                  setColumns={this.setColumns.bind(this)}
-                  setClues={this.setClues.bind(this)}
-                  columnsSelected={this.state.columnsSelected}
-                  cluesSelected={this.state.cluesSelected}
-                />
+                {this.state.gameOver ? <div><h1>No More Categories</h1>
+                  <button onClick={() => this.newGame()}>New Game</button>
+                </div> : ''}
+                {!this.state.gameOver ? <Board categories={this.state.categories} isLoading={this.state.isLoading}/> : ''}
+                {!this.state.gameOver ?
+                  <GameControls
+                    reset={this.reset.bind(this)}
+                    setColumns={this.setColumns.bind(this)}
+                    setClues={this.setClues.bind(this)}
+                    columnsSelected={this.state.columnsSelected}
+                    cluesSelected={this.state.cluesSelected}
+                  /> : ''}
               </div>
             </Route>
             <Route path="/clue"
